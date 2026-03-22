@@ -4,6 +4,649 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Zap, Code, Database, Settings, Shield, Brain, Terminal, Layers, Lightbulb } from "lucide-react";
 
+interface GeneratedFile {
+  path: string;
+  content: string | string[];
+}
+
+interface ProjectConfig {
+  name: string;
+  type: string;
+  description: string;
+  stack: string;
+}
+
+const STACK_DEPENDENCIES: Record<string, Record<string, string[]>> = {
+  "React + Vite": {
+    "package.json": [
+      '"name": "my-project",',
+      '"version": "0.1.0",',
+      '"type": "module",',
+      '"scripts": {',
+      '"dev": "vite",',
+      '"build": "vite build",',
+      '"preview": "vite preview"',
+      '"lint": "eslint . --ext js,jsx"',
+      '"lint:fix": "eslint . --ext js,jsx --fix"'
+    ],
+    "index.html": [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '  <title>My Project</title>',
+      '</head>',
+      '<body>',
+      '  <div id="root"></div>',
+      '  <script type="module" src="/src/main.jsx"></script>',
+      '</body>',
+      '</html>'
+    ],
+    "vite.config.js": [
+      'import { defineConfig } from "vite";',
+      'import react from "@vitejs/plugin-react";',
+      'import path from "path";',
+      '',
+      'export default defineConfig({',
+      '  plugins: [react()],',
+      '  resolve: {',
+      '    alias: {',
+      '      "@": path.resolve(__dirname, "./src")',
+      '    }',
+      '  }',
+      '});'
+    ]
+  },
+  "Next.js 14": {
+    "package.json": [
+      '"name": "nextjs-app",',
+      '"version": "0.1.0",',
+      '"private": true,',
+      '"scripts": {',
+      '"dev": "next dev",',
+      '"build": "next build",',
+      '"start": "next start",',
+      '"lint": "next lint"',
+      '"typecheck": "tsc --noEmit"'
+    ],
+    "app/layout.tsx": [
+      'import type { Metadata } from "next";',
+      'import "./globals.css";',
+      '',
+      'export const metadata: Metadata = {',
+      '  title: "Next.js App",',
+      '  description: "Built with Next.js 14"',
+      '};',
+      '',
+      'export default function RootLayout({',
+      '  children,',
+      '}: {',
+      '  children: React.ReactNode',
+      '}) {',
+      '  return (',
+      '    <html lang="en">',
+      '      <body>{children}</body>',
+      '    </html>',
+      '  );',
+      '}'
+    ],
+    "app/page.tsx": [
+      '"use client";',
+      '',
+      'import { useState } from "react";',
+      'export default function Home() {',
+      '  const [count, setCount] = useState(0);',
+      '  return (',
+      '    <main className="min-h-screen bg-gray-900 text-white p-8">',
+      '      <h1 className="text-4xl font-bold mb-4">Next.js 14 App</h1>',
+      '      <p className="text-gray-400">Start editing to see magic happen</p>',
+      '      <button',
+      '        onClick={() => setCount((c) => c + 1)}',
+      '        className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"',
+      '      >',
+      '        Count: {count}',
+      '      </button>',
+      '    </main>',
+      '  );',
+      '}'
+    ],
+    "app/globals.css": [
+      '@tailwind base;',
+      '@tailwind components;',
+      '@tailwind utilities;'
+    ],
+    "next.config.ts": [
+      'import type { NextConfig } from "next";',
+      'const nextConfig: NextConfig = {};',
+      'export default nextConfig;'
+    ]
+  },
+  "PWA": {
+    "package.json": [
+      '"name": "my-pwa",',
+      '"version": "0.1.0",',
+      '"private": true,',
+      '"scripts": {',
+      '"dev": "vite",',
+      '"build": "vite build && vite-plugin-pwa generateSW",',
+      '"preview": "vite preview"',
+      '"lint": "eslint . --ext js,jsx"'
+    ],
+    "index.html": [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '  <meta name="theme-color" content="#000000">',
+      '  <link rel="manifest" href="/manifest.json">',
+      '  <title>My PWA</title>',
+      '</head>',
+      '<body>',
+      '  <div id="root"></div>',
+      '  <script type="module" src="/src/main.jsx"></script>',
+      '</body>',
+      '</html>'
+    ],
+    "manifest.json": [
+      '{"name": "My Progressive Web App",',
+      '"short_name": "PWA",',
+      '"start_url": "/",',
+      '"display": "standalone",',
+      '"background_color": "#000000",',
+      '"theme_color": "#000000",',
+      '"icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}]}'
+    ]
+  },
+  "SvelteKit": {
+    "package.json": [
+      '"name": "sveltekit-app",',
+      '"version": "0.0.1",',
+      '"type": "module",',
+      '"scripts": {',
+      '"dev": "vite dev",',
+      '"build": "vite build",',
+      '"preview": "vite preview"',
+      '"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"',
+      '"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"',
+      '"lint": "prettier --check . && eslint ."',
+      '"lint:fix": "prettier --write . && eslint . --fix"'
+    ],
+    "svelte.config.js": [
+      'import adapter from "@sveltejs/adapter-auto";',
+      'import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";',
+      '',
+      '/** @type {import("@sveltejs/kit").Config} */',
+      'const config = {',
+      '  preprocess: vitePreprocess(),',
+      '  kit: {',
+      '    adapter: adapter()',
+      '  }',
+      '};',
+      '',
+      'export default config;'
+    ]
+  },
+  "Astro": {
+    "package.json": [
+      '"name": "astro-app",',
+      '"version": "1.0.0",',
+      '"type": "module",',
+      '"scripts": {',
+      '"dev": "astro dev",',
+      '"build": "astro build",',
+      '"preview": "astro preview"',
+      '"lint": "astro check"',
+      '"format": "prettier --write ."'
+    ],
+    "astro.config.mjs": [
+      'import { defineConfig } from "astro/config";',
+      'import tailwind from "@astrojs/tailwind";',
+      '',
+      'export default defineConfig({',
+      '  integrations: [tailwind()]',
+      '});'
+    ],
+    "src/layouts/Layout.astro": [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '  <title><slot /> - Astro</title>',
+      '</head>',
+      '<body>',
+      '  <slot />',
+      '</body>',
+      '</html>'
+    ],
+    "src/pages/index.astro": [
+      '---',
+      'import Layout from "../layouts/Layout.astro";',
+      'const title = "Welcome to Astro";',
+      '---',
+      '<Layout title={title}>',
+      '  <main class="p-8">',
+      '    <h1>{title}</h1>',
+      '    <p class="mt-4 text-gray-600">Start building amazing projects with Astro</p>',
+      '  </main>',
+      '</Layout>'
+    ]
+  },
+  "Full Stack (Node + React)": {
+    "package.json": [
+      '"name": "fullstack-app",',
+      '"version": "0.1.0",',
+      '"scripts": {',
+      '"dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",',
+      '"dev:client": "cd client && npm run dev",',
+      '"dev:server": "cd server && nodemon server.js"',
+      '"build": "npm run build:client && npm run build:server"',
+      '"build:client": "cd client && npm run build"',
+      '"build:server": "cd server && npm run build"',
+      '"start": "node server/server.js"'
+    ],
+    "server/server.js": [
+      'const express = require("express");',
+      'const cors = require("cors");',
+      'const app = express();',
+      '',
+      'app.use(cors());',
+      'app.use(express.json());',
+      '',
+      '// Health check',
+      'app.get("/api/health", (req, res) => {',
+      '  res.json({ status: "ok", message: "Full stack app running" });',
+      '});',
+      '',
+      '// Example API endpoint',
+      'app.get("/api/users", (req, res) => {',
+      '  const users = [',
+      '    { id: 1, name: "John Doe", email: "john@example.com" },',
+      '    { id: 2, name: "Jane Smith", email: "jane@example.com" }',
+      '  ];',
+      '  res.json(users);',
+      '});',
+      '',
+      'const PORT = process.env.PORT || 3000;',
+      'app.listen(PORT, () => console.log(`Server running on port ${PORT}`));'
+    ],
+    "client/package.json": [
+      '"name": "client",',
+      '"version": "0.1.0",',
+      '"type": "module",',
+      '"scripts": {',
+      '"dev": "vite",',
+      '"build": "vite build"',
+      '"preview": "vite preview"'
+    ],
+    "client/index.html": [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '  <title>Full Stack App</title>',
+      '</head>',
+      '<body>',
+      '  <div id="root"></div>',
+      '  <script type="module" src="/src/main.jsx"></script>',
+      '</body>',
+      '</html>'
+    ],
+    "client/vite.config.js": [
+      'import { defineConfig } from "vite";',
+      'import react from "@vitejs/plugin-react";',
+      'import path from "path";',
+      '',
+      'export default defineConfig({',
+      '  plugins: [react()],',
+      '  resolve: {',
+      '    alias: {',
+      '      "@": path.resolve(__dirname, "./src")',
+      '    }',
+      '  }',
+      '});'
+    ]
+  }
+};
+
+const STACK_STRUCTURE: Record<string, string[]> = {
+  "React + Vite": [
+    "src/",
+    "src/components/",
+    "src/app/",
+    "src/lib/",
+    "src/hooks/",
+    "public/",
+    "index.html",
+    "vite.config.js",
+    "package.json",
+    ".gitignore"
+  ],
+  "Next.js 14": [
+    "app/",
+    "src/",
+    "public/",
+    ".env.local",
+    "next.config.ts",
+    "tsconfig.json",
+    "tailwind.config.js",
+    "postcss.config.mjs",
+    "package.json",
+    ".gitignore"
+  ],
+  "PWA": [
+    "src/",
+    "public/",
+    "index.html",
+    "vite.config.js",
+    "package.json",
+    "manifest.json",
+    ".gitignore"
+  ],
+  "SvelteKit": [
+    "src/",
+    "src/routes/",
+    "src/lib/",
+    ".svelte-kit/",
+    "static/",
+    "svelte.config.js",
+    "package.json",
+    ".gitignore"
+  ],
+  "Astro": [
+    "src/",
+    "src/layouts/",
+    "src/components/",
+    "src/pages/",
+    "public/",
+    "astro.config.mjs",
+    "package.json",
+    ".gitignore"
+  ],
+  "Full Stack (Node + React)": [
+    "client/",
+    "client/src/",
+    "server/",
+    "package.json",
+    ".gitignore"
+  ]
+};
+
+const REACT_VITE_FILES = [
+  {
+    path: "src/main.jsx",
+    content: [
+      'import React from "react";',
+      'import ReactDOM from "react-dom/client";',
+      'import App from "./App.jsx";',
+      'import "./index.css";',
+      '',
+      'ReactDOM.createRoot(document.getElementById("root")).render(',
+      '  <React.StrictMode>',
+      '    <App />',
+      '  </React.StrictMode>',
+      ');'
+    ]
+  },
+  {
+    path: "src/App.jsx",
+    content: [
+      'import { useState } from "react";',
+      'import "./App.css";',
+      '',
+      'export default function App() {',
+      '  const [count, setCount] = useState(0);',
+      '  return (',
+      '    <div className="app">',
+      '      <h1>React + Vite App</h1>',
+      '      <p>Start editing to see magic happen</p>',
+      '      <button onClick={() => setCount((c) => c + 1)}>',
+      '        Count: {count}',
+      '      </button>',
+      '    </div>',
+      '  );',
+      '}'
+    ]
+  },
+  {
+    path: "src/index.css",
+    content: [
+      '@tailwind base;',
+      '@tailwind components;',
+      '@tailwind utilities;'
+    ]
+  },
+  {
+    path: "src/App.css",
+    content: [
+      '.app {',
+      '  min-height: 100vh;',
+      '  display: flex;',
+      '  flex-direction: column;',
+      '  align-items: center;',
+      '  justify-content: center;',
+      '  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);',
+      '  color: white;',
+      '}'
+    ]
+  },
+  {
+    path: ".gitignore",
+    content: [
+      'node_modules',
+      '.DS_Store',
+      'dist',
+      'dist-ssr',
+      '*.local'
+    ]
+  }
+];
+
+const NEXT_14_FILES = [
+  {
+    path: "app/page.tsx",
+    content: [
+      '"use client";',
+      '',
+      'import { useState } from "react";',
+      'import Link from "next/link";',
+      'export default function Home() {',
+      '  const [count, setCount] = useState(0);',
+      '  return (',
+      '    <main className="min-h-screen bg-gradient-to-br from-purple-600 to-pink-600 p-8 flex items-center justify-center">',
+      '      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-center">',
+      '        <h1 className="text-4xl font-bold text-white mb-4">Next.js 14 App</h1>',
+      '        <p className="text-white/80 mb-6">Start editing to see magic happen</p>',
+      '        <button',
+      '          onClick={() => setCount((c) => c + 1)}',
+      '          className="px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-white/90 transition-all transform hover:scale-105"',
+      '        >',
+      '          Count: {count}',
+      '        </button>',
+      '      </div>',
+      '    </main>',
+      '  );',
+      '}'
+    ]
+  },
+  {
+    path: "app/globals.css",
+    content: [
+      '@tailwind base;',
+      '@tailwind components;',
+      '@tailwind utilities;'
+    ]
+  },
+  {
+    path: ".env.local",
+    content: [
+      'NEXT_PUBLIC_API_URL=http://localhost:3001'
+    ]
+  },
+  {
+    path: ".gitignore",
+    content: [
+      'node_modules',
+      '.next',
+      '.env',
+      '.env.local',
+      '.env.development',
+      '.env.production'
+    ]
+  }
+];
+
+async function writeFile(path: string, content: string[]): Promise<void> {
+  const fullPath = `/workspace/3aefd624-fd90-4425-9cbc-3c6e580f7aa2/sessions/agent_b661cbde-a50c-40a6-8581-c2465f9581b6/${path}`;
+  const dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
+  if (typeof Bun !== 'undefined') {
+    await Bun.write(`${dir}/.gitkeep`, '');
+    await Bun.write(fullPath, content.join('\n') + '\n');
+  } else {
+    const fs = await import('fs');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(fullPath, content.join('\n') + '\n');
+  }
+}
+
+async function createDirectories(structure: string[]): Promise<void> {
+  for (const item of structure) {
+    if (!item.includes('/')) continue;
+    const dir = `/workspace/3aefd624-fd90-4425-9cbc-3c6e580f7aa2/sessions/agent_b661cbde-a50c-40a6-8581-c2465f9581b6/${item}`;
+    await Bun.write(`${dir}/.gitkeep`, '');
+  }
+}
+
+async function generateProject(config: ProjectConfig): Promise<GeneratedFile[]> {
+  const files: GeneratedFile[] = [];
+  const stackKey = config.stack as keyof typeof STACK_DEPENDENCIES;
+  const deps = STACK_DEPENDENCIES[stackKey];
+
+  // Create directory structure
+  const structure = STACK_STRUCTURE[stackKey] || STACK_STRUCTURE["Next.js 14"];
+  await createDirectories(structure);
+
+  // Write main config files
+  if (deps["package.json"]) {
+    const packageJson = [
+      `{`,
+      '  "name": "' + config.name + '",',
+      '  "version": "0.1.0",',
+      '  "private": true,',
+      '  "scripts": {',
+      '    "dev": "next dev",',
+      '    "build": "next build",',
+      '    "start": "next start",',
+      '    "lint": "next lint",',
+      '    "typecheck": "tsc --noEmit"',
+      '  },',
+      '  "dependencies": {',
+      '    "next": "^16.1.3",',
+      '    "react": "^19.2.3",',
+      '    "react-dom": "^19.2.3"',
+      '  }',
+      '}'
+    ];
+    files.push({
+      path: "package.json",
+      content: packageJson.join('\n')
+    });
+    await writeFile("package.json", packageJson);
+  }
+
+  if (deps["index.html"]) {
+    files.push({
+      path: "index.html",
+      content: deps["index.html"]
+    });
+    await writeFile("index.html", deps["index.html"]);
+  }
+
+  if (deps["vite.config.js"]) {
+    files.push({
+      path: "vite.config.js",
+      content: deps["vite.config.js"]
+    });
+    await writeFile("vite.config.js", deps["vite.config.js"]);
+  }
+
+  if (deps["app/layout.tsx"]) {
+    files.push({
+      path: "app/layout.tsx",
+      content: deps["app/layout.tsx"]
+    });
+    await writeFile("app/layout.tsx", deps["app/layout.tsx"]);
+  }
+
+  if (deps["app/page.tsx"]) {
+    files.push({
+      path: "app/page.tsx",
+      content: deps["app/page.tsx"]
+    });
+    await writeFile("app/page.tsx", deps["app/page.tsx"]);
+  }
+
+  if (deps["app/globals.css"]) {
+    files.push({
+      path: "app/globals.css",
+      content: deps["app/globals.css"]
+    });
+    await writeFile("app/globals.css", deps["app/globals.css"]);
+  }
+
+  if (deps["manifest.json"]) {
+    files.push({
+      path: "manifest.json",
+      content: deps["manifest.json"]
+    });
+    await writeFile("manifest.json", deps["manifest.json"]);
+  }
+
+  if (deps["svelte.config.js"]) {
+    files.push({
+      path: "svelte.config.js",
+      content: deps["svelte.config.js"]
+    });
+    await writeFile("svelte.config.js", deps["svelte.config.js"]);
+  }
+
+  if (deps["astro.config.mjs"]) {
+    files.push({
+      path: "astro.config.mjs",
+      content: deps["astro.config.mjs"]
+    });
+    await writeFile("astro.config.mjs", deps["astro.config.mjs"]);
+  }
+
+  if (deps["server/server.js"]) {
+    files.push({
+      path: "server/server.js",
+      content: deps["server/server.js"]
+    });
+    await writeFile("server/server.js", deps["server/server.js"]);
+  }
+
+  // Add generic React/Vite files if stack-specific ones don't exist
+  if (stackKey === "React + Vite") {
+    for (const file of REACT_VITE_FILES) {
+      files.push(file);
+      await writeFile(file.path, file.content);
+    }
+  }
+
+  if (stackKey === "Next.js 14") {
+    for (const file of NEXT_14_FILES) {
+      files.push(file);
+      await writeFile(file.path, file.content);
+    }
+  }
+
+  return files;
+}
+
 const AGENTS = [
   {
     id: "architect",
@@ -65,25 +708,53 @@ export default function Home() {
   const stackOptions = ["React + Vite", "Next.js 14", "PWA", "SvelteKit", "Astro", "Full Stack (Node + React)"];
   const [selectedStack, setSelectedStack] = useState(stackOptions[1]);
 
-  const handleBuild = () => {
+  const handleBuild = async () => {
     if (!input.trim()) return;
+
+    const projectName = input.split(' ').slice(0, 3).join(' ').trim() || 'project';
+
     setIsBuilding(true);
     setProgress(0);
     setOutput("");
 
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 15;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-        setIsBuilding(false);
-        setTimeout(() => {
-          setOutput("✅ Build Complete! Project generated successfully.\n\n📁 File Structure:\n├── src/\n│   ├── components/\n│   ├── app/\n│   ├── lib/\n│   └── hooks/\n├── public/\n└── package.json\n\n🚀 Run 'npm install' then 'npm run dev' to start!");
-        }, 500);
-      }
-      setProgress(Math.min(currentProgress, 100));
-    }, 500);
+    try {
+      const config: ProjectConfig = {
+        name: projectName,
+        type: input.trim(),
+        description: input.trim(),
+        stack: selectedStack
+      };
+
+      const files = await generateProject(config);
+
+      let currentProgress = 0;
+      const interval = setInterval(() => {
+        currentProgress += 10;
+        if (currentProgress >= 100) {
+          currentProgress = 100;
+          clearInterval(interval);
+          setIsBuilding(false);
+
+          // Build output
+          let outputText = `✅ Build Complete! Project generated successfully.\n\n`;
+          outputText += `📁 ${selectedStack} Project: ${projectName}\n`;
+          outputText += `📄 Files created: ${files.length}\n\n`;
+          outputText += `📂 File Structure:\n`;
+          outputText += STACK_STRUCTURE[selectedStack]?.join('\n') || STACK_STRUCTURE["Next.js 14"].join('\n');
+
+          outputText += `\n\n🚀 Setup Instructions:\n`;
+          outputText += `1. Install dependencies: bun install\n`;
+          outputText += `2. Start development server: bun dev\n`;
+          outputText += `3. Open http://localhost:3000`;
+
+          setOutput(outputText);
+        }
+        setProgress(currentProgress);
+      }, 200);
+    } catch (error) {
+      setIsBuilding(false);
+      setOutput(`❌ Error generating project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const currentAgent = AGENTS.find(a => a.id === selectedAgent);

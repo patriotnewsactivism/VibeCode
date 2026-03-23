@@ -16,6 +16,26 @@
 
 - Bun installed (`curl -fsSL https://bun.sh/install | bash`)
 - Node.js 20+ (for compatibility)
+- **z.ai API key** (GLM-4.7-flash) for primary AI generation
+- **deepseek API key** (optional, used as fallback)
+
+### API Keys
+
+```bash
+# Get z.ai key from: https://open.bigmodel.cn/
+ZAI_API_KEY=your_api_key_here
+
+# Get deepseek key from: https://platform.deepseek.com/
+DEEPSEEK_API_KEY=your_api_key_here
+```
+
+### AI Service
+
+- Located in `src/lib/ai-service.ts`
+- Supports two providers: z.ai GLM-4.7-flash and deepseek-3.2
+- Uses automatic fallback when primary provider fails
+- Agent-specific code generation and focus areas
+- Real-time JSON output for file generation
 
 ### Commands
 
@@ -83,6 +103,7 @@ bun typecheck      # Run TypeScript type checking
 ```
 /
 ├── .gitignore              # Git ignore rules
+├── .env.local              # Environment variables (API keys)
 ├── package.json            # Dependencies and scripts
 ├── bun.lock                # Bun lockfile
 ├── next.config.ts          # Next.js configuration
@@ -92,6 +113,8 @@ bun typecheck      # Run TypeScript type checking
 ├── public/                 # Static assets
 │   └── .gitkeep
 └── src/                    # Source code
+    ├── lib/                # Utility libraries
+    │   └── ai-service.ts   # AI generation service
     └── app/                # Next.js App Router
         ├── layout.tsx      # Root layout
         ├── page.tsx        # Home page
@@ -138,6 +161,7 @@ bun typecheck      # Run TypeScript type checking
 
 ### Environment Variables
 
-- None required for base template
+- **Required**: `ZAI_API_KEY` - API key for z.ai GLM-4.7-flash
+- **Optional**: `DEEPSEEK_API_KEY` - API key for deepseek-3.2 fallback
 - Add as needed for features
 - Use `.env.local` for local development

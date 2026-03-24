@@ -505,10 +505,6 @@ async function writeFile(path: string, content: string[]): Promise<void> {
   if (typeof Bun !== 'undefined') {
     await Bun.write(`${dir}/.gitkeep`, '');
     await Bun.write(fullPath, content.join('\n') + '\n');
-  } else {
-    const fs = await import('fs');
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(fullPath, content.join('\n') + '\n');
   }
 }
 
